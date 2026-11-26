@@ -2,7 +2,7 @@ name: Build JJS IPA
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -18,13 +18,16 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Build JJS
+      - name: Build JJS App
         run: |
           xcodebuild -project JJS.xcodeproj \
             -scheme JJS \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build 
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package JJS.ipa
         run: |
@@ -35,5 +38,5 @@ jobs:
       - name: Upload JJS.ipa
         uses: actions/upload-artifact@v4
         with:
-          name: JJS-unsigned
-          path: JJS-unsigned.ipa
+          name: JJS-ipa
+          path: JJS.ipa
