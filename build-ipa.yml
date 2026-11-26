@@ -1,0 +1,42 @@
+﻿name: Build JJS Unsigned IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build JJS (Unsigned)
+        run: |
+          xcodebuild -project JJS.xcodeproj \
+            -scheme JJS \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package JJS-unsigned.ipa
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/JJS.app Payload/
+          zip -r JJS-unsigned.ipa Payload
+
+      - name: Upload JJS-unsigned.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: JJS-unsigned
+          path: JJS-unsigned.ipa
