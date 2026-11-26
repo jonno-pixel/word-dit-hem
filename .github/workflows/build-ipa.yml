@@ -1,22 +1,39 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: Swift
+name: Build JJS IPA
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: macos-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: swift build 
-    - name: Run tests
-      run: swift test 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build JJS
+        run: |
+          xcodebuild -project JJS.xcodeproj \
+            -scheme JJS \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build 
+
+      - name: Package JJS.ipa
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/JJS.app Payload/
+          zip -r JJS.ipa Payload
+
+      - name: Upload JJS.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: JJS-unsigned
+          path: JJS-unsigned.ipa
